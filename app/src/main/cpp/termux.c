@@ -87,9 +87,11 @@ static int create_subprocess(
     close(ptm);
     close(pts);
 
-    // Clear signal handlers
+    // Clear signal handlers (skip SIGKILL and SIGSTOP as they cannot be handled)
     for (int i = 1; i < NSIG; i++) {
-        signal(i, SIG_DFL);
+        if (i != SIGKILL && i != SIGSTOP) {
+            signal(i, SIG_DFL);
+        }
     }
 
     // Change working directory
@@ -142,7 +144,11 @@ Java_com_zbuntu_terminal_pty_JNI_createSubprocess(
     char** argv = (char**)malloc((args_len + 1) * sizeof(char*));
     for (int i = 0; i < args_len; i++) {
         jstring arg = (jstring)(*env)->GetObjectArrayElement(env, args, i);
-        argv[i] = (char*)(*env)->GetStringUTFChars(env, arg, NULL);
+        if (arg == NULL) {
+            argv[i] = strdup("");  // Use empty string for null elements
+        } else {
+            argv[i] = (char*)(*env)->GetStringUTFChars(env, arg, NULL);
+        }
     }
     argv[args_len] = NULL;
 
@@ -153,7 +159,11 @@ Java_com_zbuntu_terminal_pty_JNI_createSubprocess(
         envp = (char**)malloc((env_len + 1) * sizeof(char*));
         for (int i = 0; i < env_len; i++) {
             jstring env_var = (jstring)(*env)->GetObjectArrayElement(env, envVars, i);
-            envp[i] = (char*)(*env)->GetStringUTFChars(env, env_var, NULL);
+            if (env_var == NULL) {
+                envp[i] = strdup("");  // Use empty string for null elements
+            } else {
+                envp[i] = (char*)(*env)->GetStringUTFChars(env, env_var, NULL);
+            }
         }
         envp[env_len] = NULL;
     }
@@ -176,7 +186,11 @@ Java_com_zbuntu_terminal_pty_JNI_createSubprocess(
     }
     for (int i = 0; i < args_len; i++) {
         jstring arg = (jstring)(*env)->GetObjectArrayElement(env, args, i);
-        (*env)->ReleaseStringUTFChars(env, arg, argv[i]);
+        if (arg != NULL) {
+            (*env)->ReleaseStringUTFChars(env, arg, argv[i]);
+        } else {
+            free(argv[i]);  // Free strdup'd empty string
+        }
     }
     free(argv);
 
@@ -184,7 +198,11 @@ Java_com_zbuntu_terminal_pty_JNI_createSubprocess(
         jsize env_len = (*env)->GetArrayLength(env, envVars);
         for (int i = 0; i < env_len; i++) {
             jstring env_var = (jstring)(*env)->GetObjectArrayElement(env, envVars, i);
-            (*env)->ReleaseStringUTFChars(env, env_var, envp[i]);
+            if (env_var != NULL) {
+                (*env)->ReleaseStringUTFChars(env, env_var, envp[i]);
+            } else {
+                free(envp[i]);  // Free strdup'd empty string
+            }
         }
         free(envp);
     }

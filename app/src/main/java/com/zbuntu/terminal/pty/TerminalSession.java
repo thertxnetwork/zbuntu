@@ -131,6 +131,13 @@ public class TerminalSession {
 
     /**
      * Process terminal output
+     * TODO: Implement full VT100 terminal emulation
+     * This is a placeholder that logs output. In a production app, this should:
+     * - Parse ANSI/VT100 escape sequences
+     * - Update terminal buffer and cursor position
+     * - Handle control characters
+     * - Trigger view redraws with processed data
+     * Consider integrating a library like Termux's terminal-emulator module
      */
     private void processOutput(byte[] buffer, int length) {
         // This is where terminal emulation would process VT100 codes
@@ -181,12 +188,20 @@ public class TerminalSession {
 
     /**
      * Create a FileDescriptor from an integer fd
+     * Note: This uses reflection which may not work on all Android versions
+     * For production, consider using ParcelFileDescriptor or other official APIs
+     * This is a simplified approach for educational purposes
      */
     private FileDescriptor createFileDescriptor(int fd) throws Exception {
         FileDescriptor fileDescriptor = new FileDescriptor();
-        Field descriptorField = FileDescriptor.class.getDeclaredField("descriptor");
-        descriptorField.setAccessible(true);
-        descriptorField.setInt(fileDescriptor, fd);
+        try {
+            Field descriptorField = FileDescriptor.class.getDeclaredField("descriptor");
+            descriptorField.setAccessible(true);
+            descriptorField.setInt(fileDescriptor, fd);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            Log.e(TAG, "Failed to create FileDescriptor using reflection", e);
+            throw new Exception("FileDescriptor creation failed - unsupported on this Android version");
+        }
         return fileDescriptor;
     }
 

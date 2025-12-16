@@ -211,9 +211,13 @@ public class TerminalView extends View {
         
         @Override
         public boolean deleteSurroundingText(int beforeLength, int afterLength) {
-            // Handle backspace
+            // Handle backspace - send multiple backspace characters if needed
             if (beforeLength > 0 && mClient != null) {
-                mClient.onTextInput("\b");
+                StringBuilder backspaces = new StringBuilder();
+                for (int i = 0; i < beforeLength; i++) {
+                    backspaces.append("\b");
+                }
+                mClient.onTextInput(backspaces.toString());
             }
             return true;
         }

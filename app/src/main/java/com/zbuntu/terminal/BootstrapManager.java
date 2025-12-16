@@ -53,7 +53,7 @@ public class BootstrapManager {
     private String getArchitecture() {
         String arch = System.getProperty("os.arch");
         if (arch == null) {
-            arch = System.getProperty("os.arch");
+            arch = android.os.Build.SUPPORTED_ABIS[0];
         }
         
         if (arch.contains("aarch64") || arch.contains("armv8")) {
