@@ -1,0 +1,2 @@
+rootProject.name = 'ZbuntuTerminal'
+include ':app'
